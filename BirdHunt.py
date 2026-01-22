@@ -111,6 +111,119 @@ def redraw(player, kill_dot, left_birds, right_birds, score, counter):
     update_timer(counter)
     pygame.display.update()
 
+# Helper function to draw centered text
+def draw_text_centered(text, font, color, surface, x, y):
+    textobj = font.render(text, True, color)
+    textrect = textobj.get_rect()
+    textrect.center = (x, y)
+    surface.blit(textobj, textrect)
+    return textrect
+
+# Start Menu
+def start_menu():
+    menu_font = pygame.font.SysFont(("arial", "helvetica"), 50, bold=True)
+    title_font = pygame.font.SysFont(("arial", "helvetica"), 80, bold=True)
+    
+    while True:
+        STAGE.blit(BG, (0,0))
+        
+        draw_text_centered("BirdHunt", title_font, WHITE, STAGE, WIDTH/2, HEIGHT/3)
+        
+        mx, my = pygame.mouse.get_pos()
+        
+        start_rect = draw_text_centered("Start", menu_font, WHITE, STAGE, WIDTH/2, HEIGHT/2)
+        help_rect = draw_text_centered("How to Play", menu_font, WHITE, STAGE, WIDTH/2, HEIGHT/2 + 70)
+        
+        # Highlight on hover
+        if start_rect.collidepoint((mx, my)):
+            draw_text_centered("Start", menu_font, (200, 200, 200), STAGE, WIDTH/2, HEIGHT/2)
+        if help_rect.collidepoint((mx, my)):
+            draw_text_centered("How to Play", menu_font, (200, 200, 200), STAGE, WIDTH/2, HEIGHT/2 + 70)
+            
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return 'quit'
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if start_rect.collidepoint((mx, my)):
+                        return 'start'
+                    if help_rect.collidepoint((mx, my)):
+                        return 'help'
+                        
+        pygame.display.update()
+        CLOCK.tick(FPS)
+
+# How to Play Screen
+def how_to_play():
+    font = pygame.font.SysFont(("arial", "helvetica"), 30, bold=True)
+    title_font = pygame.font.SysFont(("arial", "helvetica"), 50, bold=True)
+    
+    while True:
+        STAGE.blit(BG, (0,0))
+        
+        draw_text_centered("How to Play", title_font, WHITE, STAGE, WIDTH/2, 100)
+        
+        instructions = [
+            "Shoot birds to score points.",
+            "Use Arrow Keys to move crosshairs.",
+            "Press SPACE to shoot.",
+            "Time Limit: 30 seconds."
+        ]
+        
+        for i, line in enumerate(instructions):
+            draw_text_centered(line, font, WHITE, STAGE, WIDTH/2, 200 + i * 50)
+            
+        back_rect = draw_text_centered("Back", font, WHITE, STAGE, WIDTH/2, 500)
+        
+        mx, my = pygame.mouse.get_pos()
+        if back_rect.collidepoint((mx, my)):
+            draw_text_centered("Back", font, (200, 200, 200), STAGE, WIDTH/2, 500)
+            
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return 'quit'
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if back_rect.collidepoint((mx, my)):
+                    return 'back'
+            if event.type == pygame.KEYDOWN:
+                return 'back'
+                
+        pygame.display.update()
+        CLOCK.tick(FPS)
+
+# Game Over Screen
+def game_over_screen(score):
+    menu_font = pygame.font.SysFont(("arial", "helvetica"), 40, bold=True)
+    title_font = pygame.font.SysFont(("arial", "helvetica"), 70, bold=True)
+    
+    while True:
+        STAGE.blit(BG, (0,0))
+        
+        draw_text_centered("GAME OVER", title_font, WHITE, STAGE, WIDTH/2, HEIGHT/3)
+        draw_text_centered(f"Final Score: {score}", menu_font, WHITE, STAGE, WIDTH/2, HEIGHT/3 + 80)
+        
+        mx, my = pygame.mouse.get_pos()
+        
+        play_rect = draw_text_centered("Play Again", menu_font, WHITE, STAGE, WIDTH/2, HEIGHT/2 + 50)
+        menu_rect = draw_text_centered("Return to Menu", menu_font, WHITE, STAGE, WIDTH/2, HEIGHT/2 + 120)
+        
+        if play_rect.collidepoint((mx, my)):
+            draw_text_centered("Play Again", menu_font, (200, 200, 200), STAGE, WIDTH/2, HEIGHT/2 + 50)
+        if menu_rect.collidepoint((mx, my)):
+            draw_text_centered("Return to Menu", menu_font, (200, 200, 200), STAGE, WIDTH/2, HEIGHT/2 + 120)
+            
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return 'quit'
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if play_rect.collidepoint((mx, my)):
+                    return 'play_again'
+                if menu_rect.collidepoint((mx, my)):
+                    return 'menu'
+                    
+        pygame.display.update()
+        CLOCK.tick(FPS)
+
 #function to create a bird coming from the right of the display
 def create_right_birds():
     y_pos = random.randint(0, HEIGHT)
@@ -138,27 +251,8 @@ def update_timer(counter):
     counter_text = my_font.render(f'TIME LEFT: {counter}', True, WHITE)
     STAGE.blit(counter_text, (WIDTH-counter_text.get_width(), 10))
 
-#when the time is up, this function puts game over on the screen with the score
-def game_over(score):
-    my_font = pygame.font.SysFont(("arial", "helvetica"), 64, bold=True)
-    go_text = my_font.render(f"GAME OVER", True, WHITE)
-    score_text = my_font.render(f"SCORE: {score}", True, WHITE)
-    STAGE.blit(go_text, (WIDTH/2 - go_text.get_width(), HEIGHT/2 - go_text.get_height()))
-    STAGE.blit(score_text, (WIDTH/2, HEIGHT/2))
-    pygame.display.update()
-
-#the main function
-def main():
-    pygame.init()
-    pygame.display.set_caption('BirdHunt')
-    pygame.display.set_icon(pygame.transform.scale(BIRD_FRAMES[0], (32,30))) #take an image, scale down, and set as icon
-
-    #initialize the mixer for using sounds
-    pygame.mixer.init()
-
-    #load the gun shot sound effect
-    GUN_SHOT = pygame.mixer.Sound("sounds\\gun_shot.wav")
-
+#The main game function
+def run_game():
     #initialize two lists to hold birds
     left_birds = []
     right_birds = []
@@ -182,14 +276,11 @@ def main():
         #listen for the closing of the window
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit() #just quit pygame when 'x' is pressed
+                return 'quit' # Special value to indicate quitting the app
             if event.type == pygame.USEREVENT:
                 counter -= 1 #timer goes down by 1
                 if counter < 0:
-                    #when time is up, display the game over text and wait 5 seconds
-                    keep_playing = False
-                    game_over(score)
-                    pygame.time.delay(5000)
+                    return score
         
         # randomly generate birds
         if random.randint(1, BIRD_OCCUR) == BIRD_OCCUR:
@@ -249,6 +340,47 @@ def main():
         #redraw the display
         redraw(player, kill_dot, left_birds, right_birds, score, counter)        
         
+    return score
+
+#the main controller function
+def main():
+    global GUN_SHOT
+    pygame.init()
+    pygame.display.set_caption('BirdHunt')
+    pygame.display.set_icon(pygame.transform.scale(BIRD_FRAMES[0], (32,30))) #take an image, scale down, and set as icon
+
+    #initialize the mixer for using sounds
+    pygame.mixer.init()
+
+    #load the gun shot sound effect
+    GUN_SHOT = pygame.mixer.Sound("sounds\\gun_shot.wav")
+
+    running = True
+    while running:
+        choice = start_menu()
+        
+        if choice == 'quit':
+            running = False
+        elif choice == 'help':
+            if how_to_play() == 'quit':
+                running = False
+        elif choice == 'start':
+            while True:
+                result = run_game()
+                if result == 'quit':
+                    running = False
+                    break
+                
+                score = result
+                action = game_over_screen(score)
+                
+                if action == 'quit':
+                    running = False
+                    break
+                elif action == 'menu':
+                    break
+                # if 'play_again', loop continues and runs run_game() again
+                
     pygame.quit()
 
 #run main if not imported as module
